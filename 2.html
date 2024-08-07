@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+   <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Database Setup and Queries</h1>
+
+    <h2>Creating Tables</h2>
+    <p>
+        CREATE TABLE SALESMAN (
+        SALESMAN_ID INT PRIMARY KEY,
+        NAME VARCHAR(20),
+        CITY VARCHAR(20),
+        COMMISSION VARCHAR(20)
+        );
+    </p>
+    <p>
+        CREATE TABLE CUSTOMER1 (
+        CUSTOMER_ID INT PRIMARY KEY,
+        CUST_NAME VARCHAR(20),
+        CITY VARCHAR(20),
+        GRADE INT,
+        SALESMAN_ID INT,
+        FOREIGN KEY (SALESMAN_ID) REFERENCES SALESMAN(SALESMAN_ID) ON DELETE SET NULL
+        );
+    </p>
+    <p>
+        CREATE TABLE ORDERS (
+        ORD_NO INT PRIMARY KEY,
+        PURCHASE_AMT DECIMAL(10, 2),
+        ORD_DATE DATE,
+        CUSTOMER_ID INT,
+        SALESMAN_ID INT,
+        FOREIGN KEY (CUSTOMER_ID) REFERENCES CUSTOMER1(CUSTOMER_ID) ON DELETE CASCADE,
+        FOREIGN KEY (SALESMAN_ID) REFERENCES SALESMAN(SALESMAN_ID) ON DELETE CASCADE
+        );
+    </p>
+
+    <h2>Inserting Data</h2>
+    <p>
+        INSERT INTO SALESMAN VALUES (1000, 'JOHN', 'BANGALORE', '25%');<br>
+        INSERT INTO SALESMAN VALUES (2000, 'RAVI', 'BANGALORE', '20%');<br>
+        INSERT INTO SALESMAN VALUES (3000, 'KUMAR', 'MYSORE', '15%');<br>
+        INSERT INTO SALESMAN VALUES (4000, 'SMITH', 'DELHI', '30%');<br>
+        INSERT INTO SALESMAN VALUES (5000, 'HARSHA', 'HYDERABAD', '15%');<br>
+        INSERT INTO CUSTOMER1 VALUES (10, 'PREETHI', 'BANGALORE', 100, 1000);<br>
+        INSERT INTO CUSTOMER1 VALUES (11, 'VIVEK', 'MANGALORE', 300, 1000);<br>
+        INSERT INTO CUSTOMER1 VALUES (12, 'BHASKAR', 'CHENNAI', 400, 2000);<br>
+        INSERT INTO CUSTOMER1 VALUES (13, 'CHETHAN', 'BANGALORE', 200, 2000);<br>
+        INSERT INTO CUSTOMER1 VALUES (14, 'MAMATHA', 'BANGALORE', 400, 3000);<br>
+        INSERT INTO ORDERS VALUES (50, 5000, '2017-05-04', 10, 1000);<br>
+        INSERT INTO ORDERS VALUES (51, 450, '2017-01-20', 10, 2000);<br>
+        INSERT INTO ORDERS VALUES (52, 1000, '2017-02-24', 13, 2000);<br>
+        INSERT INTO ORDERS VALUES (53, 3500, '2017-04-13', 14, 3000);<br>
+        INSERT INTO ORDERS VALUES (54, 550, '2017-03-09', 12, 2000);
+    </p>
+
+    <h2>Queries</h2>
+    <h3>1. Count the customers with grades above Bangalore's average</h3>
+    <p>
+        SELECT GRADE, COUNT(DISTINCT CUSTOMER_ID)<br>
+        FROM CUSTOMER1<br>
+        GROUP BY GRADE<br>
+        HAVING GRADE &gt; (SELECT AVG(GRADE)<br>
+        FROM CUSTOMER1<br>
+        WHERE CITY = 'BANGALORE');
+    </p>
+
+    <h3>2. Find the name and numbers of all salesmen who had more than one customer</h3>
+    <p>
+        SELECT SALESMAN_ID, NAME<br>
+        FROM SALESMAN A<br>
+        WHERE 1 &lt; (SELECT COUNT(*)<br>
+        FROM CUSTOMER1<br>
+        WHERE SALESMAN_ID = A.SALESMAN_ID);
+    </p>
+
+    <h3>3. List all salesmen and indicate those who have and don't have customers in their cities (Use UNION operation.)</h3>
+    <p>
+        SELECT SALESMAN.SALESMAN_ID, NAME, CUST_NAME, COMMISSION<br>
+        FROM SALESMAN LEFT JOIN CUSTOMER1<br>
+        ON SALESMAN.CITY = CUSTOMER1.CITY<br>
+        UNION<br>
+        SELECT SALESMAN_ID, NAME, 'NO MATCH', COMMISSION<br>
+        FROM SALESMAN<br>
+        WHERE CITY NOT IN (SELECT CITY FROM CUSTOMER1)<br>
+        ORDER BY NAME DESC;
+    </p>
+
+    <h3>4. Create a view that finds the salesman who has the customer with the highest order of a day</h3>
+    <p>
+        CREATE VIEW ELITSALESMAN AS<br>
+        SELECT B.ORD_DATE, A.SALESMAN_ID, A.NAME<br>
+        FROM SALESMAN A, ORDERS B<br>
+        WHERE A.SALESMAN_ID = B.SALESMAN_ID<br>
+        AND B.PURCHASE_AMT = (SELECT MAX(PURCHASE_AMT)<br>
+        FROM ORDERS C<br>
+        WHERE C.ORD_DATE = B.ORD_DATE);
+    </p>
+
+    <h3>5. Demonstrate the DELETE operation by removing salesman with id 1000. All his orders must also be deleted.</h3>
+    <p>
+        DELETE FROM SALESMAN WHERE SALESMAN_ID = 1000;
+    </p>
+</body>
+</html>
